@@ -13,10 +13,9 @@ char *radioname[totalStations] = {  // Station names to be displayed on OLED (ma
   "10. Synphaera",
   "11. Poptron",
   "12. The Trip",
-  "13. HeavyW Reggae"
- };
+  "13. HeavyW Reggae"};
 
-char *host[totalStations] = {
+char * host[totalStations] = {
   "https://ice2.somafm.com/groovesalad-128-mp3", 
   "https://ice6.somafm.com/vaporwaves-128-mp3", 
   "https://ice4.somafm.com/u80s-128-mp3", 
