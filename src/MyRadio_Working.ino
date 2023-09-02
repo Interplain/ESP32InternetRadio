@@ -1,5 +1,15 @@
-//23/08/2023 ESP32 Internet Radio V1
-//
+
+//  Customized by Richard Phillips / AUG 2023
+//  - Added rotary knob to change channels
+//  - Added 128x64 Oled display
+//  - Volume Up/Down Buttons
+//  - Stereo version
+//  - Added WiFiManger to config WiFi credentials over an access point
+//  - Added header file Stations.h for easier stations management
+//  - Wifi Manager change
+//  - Updated stations list
+//  - Refactored code with ESP32_VS1053_Stream Library
+//  - Adding Metadata such as song information
 
 #include <VS1053.h>               //https://github.com/baldram/ESP_VS1053_Library
 #include <ESP32_VS1053_Stream.h>  //https://github.com/CelliesProjects/ESP32_VS1053_Stream
@@ -16,17 +26,41 @@
 #define VS1053_DCS   33
 #define VS1053_DREQ  35
 
-#define VOLUME       95         // volume level 0-100
+
+
 #define EEPROM_SIZE  128
+#define VOLUME       70         // volume level 0-100
+#define VOLUME_MIN 0
+#define VOLUME_MAX 100
+int currentVolume = VOLUME;  // Initialize the volume to the default value
 
+// Define Volume Button Pins
+const int buttonAPin = 25;
+const int buttonBPin = 34;
 
+// Store the previous button states
+int prevButtonAState = HIGH;
+int prevButtonBState = HIGH;
+
+// Define initial button states
+int buttonAState = HIGH;
+int buttonBState = HIGH;
+
+// Define button debounce delay in milliseconds
+const unsigned long DEBOUNCE_DELAY = 500;
+
+// Define button press flags
+bool buttonAPressed = false;
+bool buttonBPressed = false;
+unsigned long buttonADebounceTime = 0;
+unsigned long buttonBDebounceTime = 0;
 
 ESP32_VS1053_Stream stream;
 
 //***** RotaryEncoder
 const int rotaryDT  = 16;
 const int rotaryCLK = 17;
-const int rotarySW  = 26;          // Switch is used to trigger a reset when rotary is pushed
+const int rotarySW  = 26; // Switch is used to trigger a reset when rotary is pushed
 ESP32Encoder encoder;
 
 //***** OLED
@@ -47,7 +81,12 @@ int shift = 128;
 int textwidth;
 unsigned int currentState = 0;  // variable for statemachine in loop
 
+
 void setup () {
+
+  //Pin Setup for Volume Buttons
+  pinMode(buttonAPin, INPUT_PULLUP);// Volume Down
+  pinMode(buttonBPin, INPUT_PULLUP);// Volume Up
 
   Serial.begin(115200); while (!Serial); delay(200);
   Serial.println("Starting up Web Radio");
@@ -89,6 +128,8 @@ void setup () {
   u8g2.drawStr(2, 22, "Starting Stream..");
   u8g2.sendBuffer();
   stream.startDecoder(VS1053_CS, VS1053_DCS, VS1053_DREQ);
+  // Set the initial volume
+  stream.setVolume(VOLUME);
 
   Serial.println("Reading last Station from EEPROM");
   radioStation = readStationFromEEPROM();
@@ -108,9 +149,47 @@ void setup () {
 
 }
 
+bool showVolumeBar = false; // Flag to indicate whether to show the volume bar screen
+unsigned long volumeBarStartTime = 0; // Store the start time when the volume bar screen is shown
+
 void loop() {
-  stream.loop();
-  unsigned long currentMillis = millis();
+stream.loop();
+unsigned long currentMillis = millis();
+
+// Calculate volume bar length based on current volume
+int volumeBarLength = map(currentVolume, VOLUME_MIN, VOLUME_MAX, 40, 87);
+    
+ // Read the button states
+int buttonAState = digitalRead(buttonAPin);
+int buttonBState = digitalRead(buttonBPin);
+
+  // Check for button A press with debounce
+  if (buttonAState == LOW && prevButtonAState == HIGH && currentMillis - buttonADebounceTime > DEBOUNCE_DELAY) {
+    // Button A was pressed, decrease volume
+    currentVolume = max(VOLUME_MIN, currentVolume - 3); // Decrease volume by 3 (adjust as needed)
+    stream.setVolume(currentVolume); // Apply the new volume
+    buttonADebounceTime = currentMillis;
+    showVolumeBar = true; // Set the flag to true when button A is pressed
+    volumeBarStartTime = currentMillis; // Reset the volume bar start time
+    currentState = 3; // Transition to the volume bar state
+  }
+
+  // Check for button B press with debounce
+  if (buttonBState == LOW && prevButtonBState == HIGH && currentMillis - buttonBDebounceTime > DEBOUNCE_DELAY) {
+    // Button B was pressed, increase volume
+    currentVolume = min(VOLUME_MAX, currentVolume + 3); // Increase volume by 3 (adjust as needed)
+    stream.setVolume(currentVolume); // Apply the new volume
+    buttonBDebounceTime = currentMillis;
+    showVolumeBar = true; // Set the flag to true when button B is pressed
+    volumeBarStartTime = currentMillis; // Reset the volume bar start time
+    currentState = 3; // Transition to the volume bar state
+  }
+
+  // Update previous button states
+  prevButtonAState = buttonAState;
+  prevButtonBState = buttonBState;
+
+     
   if (currentMillis - previousMillis > interval)
   {
     if (encoder.getCount() >= 0 && encoder.getCount() < totalStations) {
@@ -155,49 +234,131 @@ void loop() {
     ESP.restart();   // button pressed, doing a restart
   }
 
-  switch (currentState) {                          // non-blocking statemachine to allow button interrupt
-    case 0:
-      u8g2.firstPage();
-      do {
-         int signalStrength = WiFi.RSSI(); // Get WiFi signal strength in dBm
+  // Handle the state machine logic
+switch (currentState) {
+  case 0:
+    // Display station name and signal strength
+    u8g2.firstPage();
+    do {
+      int signalStrength = WiFi.RSSI(); // Get WiFi signal strength in dBm
 
+      u8g2.setFont(u8g2_font_profont12_tf); // Choose a font
+      u8g2.setCursor(7, 50); // Adjust the position as needed
+      u8g2.print("Signal: ");
+      u8g2.print(signalStrength);
+      u8g2.print(" dBm");      
+      u8g2.setCursor(7, 22);
+      u8g2.print(String(radioname[radioStation]));
+      
+      u8g2.drawLine(0, 0, 127, 0);
+      u8g2.drawLine(0, 63, 127, 63);
+      u8g2.drawStr(0, 55, " "); // Add an empty line space
+      u8g2.print(eof);
+
+      } while (u8g2.nextPage());
+      currentState++;
+   // Check if the volume buttons are pressed to show the volume bar
+    if (buttonAPressed || buttonBPressed) {
+      currentState = 3; // Transition to the volume bar state
+      showVolumeBar = true;
+      volumeBarStartTime = currentMillis;
+      volumeBarLength = map(currentVolume, VOLUME_MIN, VOLUME_MAX, 0, 127);
+      
+      // Reset the button press flags
+      buttonAPressed = false;
+      buttonBPressed = false;
+    }
+    break;
+
+   case 1:
+  // Wait for a few seconds before transitioning to the next state
+  if (wait(8000, false)) {
+    currentState++;
+    // Check if the volume buttons are pressed to show the volume bar
+    if (buttonAPressed || buttonBPressed) {
+      currentState = 3; // Transition to the volume bar state
+      showVolumeBar = true;
+      volumeBarStartTime = currentMillis;
+      volumeBarLength = map(currentVolume, VOLUME_MIN, VOLUME_MAX, 0, 127);
+    }
+    shift = 128;
+    Serial.println("Switching to track Name.");
+  }
+  break;
+
+case 2:
+  // Display track information animation
   u8g2.firstPage();
   do {
-    u8g2.setFont(u8g2_font_profont12_tf); // Choose a font
-    u8g2.setCursor(7, 50); // Adjust the position as needed
-    u8g2.print("Signal: ");
-    u8g2.print(signalStrength);
-    u8g2.print(" dBm");
+    u8g2.setCursor(shift--, 22);
+    u8g2.print(songinfo);
+    u8g2.drawLine(0, 0, 127, 0);
+    u8g2.drawLine(0, 31, 127, 31);
   } while (u8g2.nextPage());
-        u8g2.setCursor(7, 22);
-        u8g2.print(String(radioname[radioStation]));
-        u8g2.print(eof);
-        u8g2.drawLine(0, 0, 127, 0);         
-        u8g2.drawLine(0, 63, 127, 63);
-
-      } while ( u8g2.nextPage() );
-      currentState++;
-      break;
-      
-    case 1:
-      if (wait(4000, 0) == true)
-      {
-        currentState++;        // if lapsed, go to next step (state)
-        shift = 128;           // start at the right end of the screen (for case 2)
-      }
-      break;
-    case 2:
-      u8g2.firstPage();
-      do {
-        u8g2.setCursor(shift--, 22);
-        u8g2.print(songinfo);
-        u8g2.drawLine(0, 0, 127, 0);
-        u8g2.drawLine(0, 31, 127, 31);       
-      } while ( u8g2.nextPage() );
-      if (textwidth < 0) textwidth = 0;
-      if (shift <= textwidth * -1) currentState = 0;
-    break;
+  // Check if the animation has moved off the left edge before transitioning
+  if (shift <= -(textwidth + 5)) { // Adjust the value as needed to ensure the entire title is off screen
+    // Animation has moved off the left edge, transition to Case 3
+    currentState = 0;
+    Serial.println("Switching to Station Name.");
+    showVolumeBar = true;
+    volumeBarStartTime = currentMillis;
+    volumeBarLength = map(currentVolume, VOLUME_MIN, VOLUME_MAX, 0, 127);    
+    // Reset the button press flags
+    buttonAPressed = false;
+    buttonBPressed = false;
+  } else if (buttonAPressed || buttonBPressed) {
+    currentState = 3; // Transition to the volume bar state
+    showVolumeBar = true;
+    volumeBarStartTime = currentMillis;
+    volumeBarLength = map(currentVolume, VOLUME_MIN, VOLUME_MAX, 0, 127);    
+    // Reset the button press flags
+    buttonAPressed = false;
+    buttonBPressed = false;
   }
+  break;
+
+
+case 3:
+  // Display volume bar screen
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_profont12_tf); // Choose a font for the volume label
+  u8g2.setCursor(47,55); // Position for the volume label
+  u8g2.print("Volume"); // Print the volume label
+
+  // Check if button A is pressed to decrease volume
+  if (buttonAPressed && currentVolume > VOLUME_MIN) {
+    currentVolume = max(VOLUME_MIN, currentVolume - 50); // Decrease volume by 10 (adjust as needed)
+    stream.setVolume(currentVolume); // Apply the new volume
+    buttonAPressed = false; // Reset the button press flag
+  }
+
+  // Check if button B is pressed to increase volume
+  if (buttonBPressed && currentVolume < VOLUME_MAX) {
+    currentVolume = min(VOLUME_MAX, currentVolume + 50); // Increase volume by 10 (adjust as needed)
+    stream.setVolume(currentVolume); // Apply the new volume
+    buttonBPressed = false; // Reset the button press flag
+  }
+
+  // Calculate the width of the volume bar based on current volume
+  int volumeBarWidth = map(currentVolume, VOLUME_MIN, VOLUME_MAX, 0, 80);
+
+  // Calculate the starting position for the volume bar to center it at the bottom
+  int volumeBarX = (128 - volumeBarWidth) / 2;
+  int volumeBarY = 60;
+
+  u8g2.drawBox(volumeBarX, volumeBarY, volumeBarWidth, 3);
+  u8g2.sendBuffer();
+
+  Serial.println("Entering Volume Bar State");
+
+  // Wait for a few seconds before transitioning back
+  if (currentMillis - volumeBarStartTime >= 3000) {
+    currentState = 0; // Transition back to station info state
+    Serial.println("Switching to Station Name.");
+    showVolumeBar = false; // Reset the flag
+  }
+  break;
+}
 }
 
 void station_connect (int station_no) {
@@ -217,7 +378,7 @@ void configModeCallback (WiFiManager * myWiFiManager) {
   u8g2.clearBuffer();
   u8g2.drawStr(12, 8,  "WiFi not configured");
   u8g2.drawStr(12, 20, "Connect to WLan:");
-  u8g2.drawStr(12, 31, "--> WebRadio_AP");
+  u8g2.drawStr(12, 31, "--> WebRadio-AP");
   u8g2.sendBuffer();
 }
 
@@ -226,12 +387,12 @@ void go_online() {
   WiFiManager wifiManager;
   wifiManager.setAPCallback(configModeCallback);
 
-  if (!wifiManager.autoConnect("WebRadio_AP")) {
+  if (!wifiManager.autoConnect("WebRadio-AP")) {
     Serial.println("Failed to connect and hit timeout");
     delay(3000);
     ESP.restart();   // no luck - going to restart the ESP
   }
-  Serial.println("connected... To Network:)");
+  Serial.println("Connected... To Network:)");
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.print("Connected. Local IP: ");
