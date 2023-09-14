@@ -14,7 +14,7 @@ ESP32 WROOM Dev MCU
 
 ---
 
-This ESP32-based web radio player allows you to listen to your favorite online radio stations with ease. The project is inspired by Nick Koumaris' work, customized and enhanced by Marc Stähli and Richard Phillips. I was to further add buttons for volume control  
+This ESP32-based web radio player allows you to listen to your favorite online radio stations with ease. The project is inspired by Nick Koumaris' work, customized and enhanced by Marc Stähli and Interplain. I was to further add buttons for volume control  
 
 ## Features
 
