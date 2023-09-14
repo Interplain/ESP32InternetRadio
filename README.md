@@ -19,7 +19,7 @@ This ESP32-based web radio player allows you to listen to your favorite online r
 ## Features
 
 - **Rotary Knob Control**: Change radio stations effortlessly with a rotary knob.
-- **Volume Buttons**: Push buttons to raise and lower buttons.
+- **Volume Buttons**: Push buttons to raise and lower audio level.
 - **128x64 OLED Display**: Provides station and song information at a glance.
 - **Stereo Audio**: Enjoy stereo sound with the ESP32.
 - **WiFiManager**: Configure WiFi credentials easily via an access point.
