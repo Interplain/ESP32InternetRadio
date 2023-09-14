@@ -16,8 +16,6 @@ ESP32 WROOM Dev MCU
 
 This ESP32-based web radio player allows you to listen to your favorite online radio stations with ease. The project is inspired by Nick Koumaris' work, customized and enhanced by Marc Stähli and Richard Phillips. I was to further add buttons for volume control  
 
-![ESP32 Web Radio Player](link-to-image.jpg)
-
 ## Features
 
 - **Rotary Knob Control**: Change radio stations effortlessly with a rotary knob.
@@ -30,7 +28,7 @@ This ESP32-based web radio player allows you to listen to your favorite online r
 
 Follow these steps to set up the ESP32 web radio player:
 
-1. **Clone the Repository**: Clone this repository to your local machine using `git clone`.
+1. **Clone the Repository**: Clone this repository to your local machine using `git clone`. Arduino IDE 2.2
 
 2. **Hardware Connections**: Connect the ESP32 to your audio output and rotary knob as per the provided pin configurations in the code.
 
