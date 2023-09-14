@@ -14,14 +14,16 @@ ESP32 WROOM Dev MCU
 
 ---
 
-This ESP32-based web radio player allows you to listen to your favorite online radio stations with ease. The project is inspired by Nick Koumaris' work, customized and enhanced by Marc Stähli and Interplain. I was to further add buttons for volume control  
+This ESP32-based web radio player allows you to listen to your favorite online radio stations with ease. The project is inspired by Nick Koumaris' work, customized and enhanced by Marc Stähli and myself Interplain. I was to further add buttons for volume control with a bar that increases and decreases with presses. With the addition of WiFi signal strength value that is refreshed each time the Station name is shown. 
 
 ## Features
 
 - **Rotary Knob Control**: Change radio stations effortlessly with a rotary knob.
+- **Volume Buttons**: Push buttons to raise and lower buttons.
 - **128x64 OLED Display**: Provides station and song information at a glance.
 - **Stereo Audio**: Enjoy stereo sound with the ESP32.
 - **WiFiManager**: Configure WiFi credentials easily via an access point.
+- **WiFi Signal Strength**: Value changes each time the Station page is shown.
 - **Station Management**: Use the `Stations.h` file to manage your radio stations.
 
 ## Getting Started
