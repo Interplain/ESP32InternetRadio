@@ -1,4 +1,5 @@
-# ESP32InternetRadio
+# ESP32 Web Radio Player
+
 ESP32 Build of Internet Radio 
 ESP32 WROOM Dev 1 Board 
 ![image](https://github.com/Interplain/ESP32InternetRadio/assets/32413344/b20f9596-6ab7-4e3c-a97e-0c6342313325)
@@ -9,15 +10,11 @@ Encoder
 VS1053 DAC Audio Board
 2 x Button Switches
 2 x 10k Resistors
-ESP32 WROOM Dev MCU 
-
-Certainly, here's a basic README template for your ESP32 web radio project:
+ESP32 WROOM Dev MCU
 
 ---
 
-# ESP32 Web Radio Player
-
-This ESP32-based web radio player allows you to listen to your favorite online radio stations with ease. The project is inspired by Nick Koumaris' work, customized and enhanced by Marc Stähli.
+This ESP32-based web radio player allows you to listen to your favorite online radio stations with ease. The project is inspired by Nick Koumaris' work, customized and enhanced by Marc Stähli and Richard Phillips. I was to further add buttons for volume control  
 
 ![ESP32 Web Radio Player](link-to-image.jpg)
 
@@ -74,5 +71,3 @@ This project is open-source and available under the [MIT License](LICENSE).
 - The open-source community for their valuable contributions.
 
 ---
-
-Feel free to modify and expand this README to suit your project's specific details and requirements. Add sections for troubleshooting, known issues, or any other relevant information.
