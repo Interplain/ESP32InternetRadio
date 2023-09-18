@@ -40,6 +40,8 @@ Follow these steps to set up the ESP32 web radio player:
 
 5. **Enjoy Radio**: Power on the ESP32, and use the rotary knob to browse and select your favorite radio stations.
 
+6. **Connecting to Local Network**: Using a browser from a Mobile Phone goto the WiFi settings and find the broadcast ~ WebRadio-APP and then in the Browser type 192.168.4.1 and then enter the Username and password for the Router that is being logged into.
+
 ## Station Management
 
 To add or edit radio stations, modify the `Stations.h` file. Each station entry includes a name and the station's URL. Make sure to update the `totalStations` variable accordingly.
